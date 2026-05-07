@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
 
-const GEMINI_API_KEY = "AIzaSyBNpGgQFc1PsSUkvb50Qjo-yqOqwJR_Fkg";
+const GEMINI_API_KEY = "AIzaSyAhH48br_lzxSY0xXxJLvLuMCamJnUhChA";
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export default function CleanSlate() {
