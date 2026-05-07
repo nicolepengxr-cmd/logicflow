@@ -28,13 +28,13 @@ export default function Footer() {
             <div className="flex flex-col gap-4">
               <span className="font-display text-[10px] uppercase tracking-widest text-paper-dark/30 font-bold">{t('footer_legal')}</span>
               <Link to="/privacy" className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors text-paper-dark/50">{t('footer_privacy')}</Link>
-              <Link to="/terms" className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors text-paper-dark/50">{t('footer_terms')}</Link>
+              <Link to="/about" className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors text-paper-dark/50">{t('footer_about')}</Link>
             </div>
           </div>
         </div>
         
         <div className="mt-20 pt-8 border-t border-black/5 flex flex-col md:flex-row justify-between gap-4">
-          <span className="text-xs text-paper-dark/20 uppercase tracking-widest font-bold">© 2024 LogicFlow. All rights reserved.</span>
+          <span className="text-xs text-paper-dark/20 uppercase tracking-widest font-bold">© 2026 LogicFlow. All rights reserved.</span>
           <span className="text-xs text-paper-dark/20 uppercase tracking-widest font-bold">Made for HKDSE Students</span>
         </div>
       </div>

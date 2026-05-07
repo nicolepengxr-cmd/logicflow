@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Calculator, ChevronLeft, Loader2, Upload, Bookmark, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI } from '@google/genai';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { InlineMath } from 'react-katex';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -366,14 +368,16 @@ export default function Solver() {
                     const isFinal = step.toLowerCase().startsWith('final answer') || step.startsWith('最終答案');
                     
                     const renderContent = (content: string) => {
-                      const segments = content.split(/(\$.*?\$)/g);
-                      return segments.map((seg, idx) => {
-                        if (seg.startsWith('$') && seg.endsWith('$')) {
-                          const math = seg.slice(1, -1);
-                          return <InlineMath key={idx} math={math} />;
-                        }
-                        return <span key={idx}>{seg}</span>;
-                      });
+                      return (
+                        <div className="markdown-body">
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkMath]} 
+                            rehypePlugins={[rehypeKatex]}
+                          >
+                            {content}
+                          </ReactMarkdown>
+                        </div>
+                      );
                     };
 
                     return (

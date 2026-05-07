@@ -31,6 +31,9 @@ export default function Navbar() {
           <Link to="/mistakebook" className="font-display text-sm font-bold uppercase tracking-widest text-paper-dark/60 hover:text-paper-dark transition-colors">
             {t('nav_mistakebook')}
           </Link>
+          <Link to="/about" className="font-display text-sm font-bold uppercase tracking-widest text-paper-dark/60 hover:text-paper-dark transition-colors">
+            {t('footer_about')}
+          </Link>
           
           <div className="flex items-center gap-2 ml-4 pl-4 border-l border-black/10">
             <Globe size={14} className="text-paper-dark/30" />
@@ -152,6 +155,13 @@ export default function Navbar() {
             className="font-display text-left text-lg font-bold uppercase tracking-widest text-paper-dark flex items-center justify-between"
           >
             {t('nav_mistakebook')} <ArrowRight size={18} />
+          </Link>
+          <Link 
+            to="/about"
+            onClick={() => setIsMenuOpen(false)}
+            className="font-display text-left text-lg font-bold uppercase tracking-widest text-paper-dark flex items-center justify-between"
+          >
+            {t('footer_about')} <ArrowRight size={18} />
           </Link>
 
           {!user ? (
