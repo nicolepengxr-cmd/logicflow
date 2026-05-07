@@ -75,6 +75,8 @@ export default function Solver() {
 
       if (solverInput.trim()) {
         parts.push({ text: solverInput });
+      } else if (selectedFile) {
+        parts.push({ text: "Please solve the math question in this image." });
       }
 
       const systemPrompt = `You are a DSE Mathematics expert. You must answer strictly following HKEAA marking scheme format. Show M marks (method), A marks (accuracy), and R marks (reasoning) for every step. Never skip steps. Always show working clearly.
@@ -96,7 +98,7 @@ export default function Solver() {
          - Irrational roots: $x = \frac{-1 \pm \sqrt{97}}{12}$. [1M, 1A]`;
 
       const isEN = language === 'EN';
-      const promptText = isEN 
+      const systemInstruction = isEN 
         ? `${systemPrompt} 
            Solve the student's question in clear step-by-step working using HKEAA marking style. Use concise English.
 
@@ -136,7 +138,11 @@ export default function Solver() {
 
       const response = await ai.models.generateContent({
         model: "gemini-3.1-pro-preview",
-        contents: { parts: [...parts, { text: promptText }] },
+        contents: { parts: parts },
+        config: {
+          systemInstruction: systemInstruction,
+          temperature: 0.1, // Set to low for consistent mathematical output
+        },
       });
 
       const text = response.text;
@@ -159,20 +165,10 @@ export default function Solver() {
       }
     } catch (err) {
       console.error("AI Solver Error:", err);
-      setTimeout(() => {
-        setSolverResult(language === 'EN' ? [
-          "Step 1: [M1] Formulate the equation from the given problem.\n$5x^2 - 2x - 3 = 0$",
-          "Step 2: [M1] Factorize the quadratic expression.\n$(5x + 3)(x - 1) = 0$",
-          "Step 3: [A1] Solve for $x$ by setting each factor to zero.\n$x = -3/5$ or $x = 1$",
-          "Final Answer: [A1] $x = -0.6$ or $x = 1$"
-        ] : [
-          "步驟 1：[M1] 根據題目寫出方程。\n$5x^2 - 2x - 3 = 0$",
-          "步驟 2：[M1] 將二次項表達式因式分解。\n$(5x + 3)(x - 1) = 0$",
-          "步驟 3：[A1] 令每個因式為零並解得 $x$。\n$x = -3/5$ 或 $x = 1$",
-          "最終答案：[A1] $x = -0.6$ 或 $x = 1$"
-        ]);
-        setIsRealAI(false);
-      }, 500);
+      setSolverResult([language === 'EN' 
+        ? "Error: Failed to connect to the AI service. Please try again later or check your network connection." 
+        : "錯誤：無法連接至 AI 服務。請稍後再試或檢查您的網路連線。"]);
+      setIsRealAI(false);
     } finally {
       setIsSolving(false);
     }
