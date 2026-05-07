@@ -2,8 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   User, 
   onAuthStateChanged, 
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider, 
   signOut 
 } from 'firebase/auth';
@@ -24,12 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handle redirect result
-    getRedirectResult(auth).catch((error) => {
-      console.error('Redirect sign-in error:', error);
-      alert(`Authentication error: ${error.message}`);
-    });
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         // Sync user to Firestore
@@ -66,12 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // Optional: Force account selection if needed
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (error: any) {
       console.error('Sign-in error:', error);
-      alert(`Authentication error: ${error.message}`);
+      // Don't use alert in iframe if possible, but keep for fallback
+      console.warn(`Authentication error: ${error.message}`);
     }
   };
 

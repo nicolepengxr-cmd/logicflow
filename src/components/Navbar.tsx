@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, ArrowRight, Globe, LogOut, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -69,53 +69,59 @@ export default function Navbar() {
               <div className="relative" ref={userMenuRef}>
                 <button 
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 group focus:outline-none"
+                  className="flex items-center gap-3 p-1 pr-3 rounded-full hover:bg-black/5 transition-all group focus:outline-none border border-transparent hover:border-black/5"
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
                 >
-                  <div className="relative">
-                    <img 
-                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
-                      alt={user.displayName || 'User'} 
-                      className="w-8 h-8 rounded-full border border-black/10 group-hover:border-accent transition-colors object-cover"
-                    />
+                  <img 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=random`} 
+                    alt={user.displayName || 'User'} 
+                    className="w-8 h-8 rounded-full border border-black/10 shadow-sm group-hover:scale-105 transition-transform object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="text-left hidden lg:flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-paper-dark leading-none">
+                      {user.displayName || user.email?.split('@')[0]}
+                    </span>
+                    <span className="text-[8px] text-paper-dark/40 uppercase tracking-tighter mt-0.5">
+                      {user.email?.length > 20 ? user.email.slice(0, 18) + '...' : user.email}
+                    </span>
                   </div>
-                  <div className="text-left hidden md:block">
-                    <div className="flex items-center gap-1">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-paper-dark truncate max-w-[120px]">
-                        {user.displayName || user.email?.split('@')[0]}
-                      </p>
-                      <ChevronDown size={10} className={`text-paper-dark/30 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-                    </div>
-                  </div>
+                  <ChevronDown size={12} className={`text-paper-dark/40 transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {isUserMenuOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className="absolute right-0 mt-3 w-56 bg-white border border-black/10 shadow-[0_10px_30px_rgba(0,0,0,0.1)] p-2 flex flex-col gap-1 rounded-sm"
-                  >
-                    <div className="px-3 py-2 mb-1 border-b border-black/5">
-                      <p className="text-[10px] font-bold text-paper-dark uppercase tracking-widest truncate">{user.displayName}</p>
-                      <p className="text-[9px] text-paper-dark/40 uppercase tracking-tighter truncate">{user.email}</p>
-                    </div>
-                    
-                    <button 
-                      onClick={() => {
-                        logOut();
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors w-full text-left rounded-sm"
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute right-0 mt-3 w-64 bg-white border border-black/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-2 flex flex-col gap-1 rounded-lg overflow-hidden"
                     >
-                      <LogOut size={12} />
-                      Sign Out
-                    </button>
-                  </motion.div>
-                )}
+                      <div className="px-4 py-3 mb-2 bg-paper-light/30 rounded-md">
+                        <p className="text-[11px] font-bold text-paper-dark uppercase tracking-widest truncate">{user.displayName}</p>
+                        <p className="text-[9px] text-paper-dark/50 font-medium truncate mt-0.5">{user.email}</p>
+                      </div>
+                      
+                      <button 
+                        onClick={() => {
+                          logOut();
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors w-full text-left rounded-md group"
+                      >
+                        <LogOut size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                        Sign Out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <button 
                 onClick={signIn}
-                className="bg-paper-dark text-white px-4 py-2 font-display text-[10px] font-bold uppercase tracking-widest hover:bg-accent transition-colors"
+                className="bg-paper-dark text-white px-6 py-2.5 font-display text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:shadow-[0_4px_12px_rgba(157,78,221,0.3)] transition-all active:scale-95"
               >
                 Sign In
               </button>
@@ -192,20 +198,22 @@ export default function Navbar() {
                 signIn();
                 setIsMenuOpen(false);
               }}
-              className="bg-paper-dark text-white w-full py-4 font-display text-xs font-bold uppercase tracking-widest hover:bg-accent transition-colors mt-4"
+              className="bg-paper-dark text-white w-full py-4 font-display text-xs font-bold uppercase tracking-widest hover:bg-accent transition-all active:scale-95 shadow-lg shadow-black/5 mt-4 flex items-center justify-center gap-2"
             >
               Sign In with Google
             </button>
           ) : (
-            <button 
-              onClick={() => {
-                logOut();
-                setIsMenuOpen(false);
-              }}
-              className="text-red-500 font-display text-sm font-bold uppercase tracking-widest flex items-center gap-2 mt-4"
-            >
-              <LogOut size={16} /> Sign Out
-            </button>
+            <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-black/5">
+              <button 
+                onClick={() => {
+                  logOut();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-md text-red-500 bg-red-50 font-display text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors"
+              >
+                <LogOut size={16} /> Sign Out
+              </button>
+            </div>
           )}
         </motion.div>
       )}
