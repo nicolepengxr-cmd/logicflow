@@ -2,10 +2,13 @@ import { motion } from 'motion/react';
 import { Upload, Loader2, Eraser, Download, RefreshCw, ChevronLeft } from 'lucide-react';
 import { useState, useRef, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { GoogleGenAI } from '@google/genai';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
-import { ai } from '../lib/gemini';
+
+const GEMINI_API_KEY = "AIzaSyBNpGgQFc1PsSUkvb50Qjo-yqOqwJR_Fkg";
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export default function CleanSlate() {
   const { t } = useLanguage();

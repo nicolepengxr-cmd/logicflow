@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calculator, ChevronLeft, Loader2, Upload, Bookmark, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -12,7 +13,9 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
-import { ai } from '../lib/gemini';
+
+const GEMINI_API_KEY = "AIzaSyBNpGgQFc1PsSUkvb50Qjo-yqOqwJR_Fkg";
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 type Syllabus = 'Core' | 'M1' | 'M2';
 
