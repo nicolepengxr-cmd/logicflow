@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { Menu, X, ArrowRight, Globe, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, X, ArrowRight, Globe, LogOut, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,18 @@ export default function Navbar() {
   const { language, setLanguage, t } = useLanguage();
   const { user, signIn, logOut } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b-[1px] border-black/5">
@@ -54,37 +66,47 @@ export default function Navbar() {
 
           <div className="ml-4 pl-4 border-l border-black/10">
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button 
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-3 focus:outline-none"
+                  className="flex items-center gap-2 group focus:outline-none"
                 >
-                  <img 
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
-                    alt={user.displayName || 'User'} 
-                    className="w-8 h-8 rounded-full border border-black/5"
-                  />
-                  <div className="text-left hidden lg:block">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-paper-dark truncate max-w-[100px]">
-                      {user.displayName?.split(' ')[0]}
-                    </p>
+                  <div className="relative">
+                    <img 
+                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+                      alt={user.displayName || 'User'} 
+                      className="w-8 h-8 rounded-full border border-black/10 group-hover:border-accent transition-colors object-cover"
+                    />
+                  </div>
+                  <div className="text-left hidden md:block">
+                    <div className="flex items-center gap-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-paper-dark truncate max-w-[120px]">
+                        {user.displayName || user.email?.split('@')[0]}
+                      </p>
+                      <ChevronDown size={10} className={`text-paper-dark/30 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    </div>
                   </div>
                 </button>
 
                 {isUserMenuOpen && (
                   <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute right-0 mt-3 w-48 bg-white border border-black/10 shadow-xl p-2 flex flex-col gap-1"
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    className="absolute right-0 mt-3 w-56 bg-white border border-black/10 shadow-[0_10px_30px_rgba(0,0,0,0.1)] p-2 flex flex-col gap-1 rounded-sm"
                   >
+                    <div className="px-3 py-2 mb-1 border-b border-black/5">
+                      <p className="text-[10px] font-bold text-paper-dark uppercase tracking-widest truncate">{user.displayName}</p>
+                      <p className="text-[9px] text-paper-dark/40 uppercase tracking-tighter truncate">{user.email}</p>
+                    </div>
+                    
                     <button 
                       onClick={() => {
                         logOut();
                         setIsUserMenuOpen(false);
                       }}
-                      className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors w-full text-left"
+                      className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors w-full text-left rounded-sm"
                     >
-                      <LogOut size={14} />
+                      <LogOut size={12} />
                       Sign Out
                     </button>
                   </motion.div>

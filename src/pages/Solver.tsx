@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calculator, ChevronLeft, Loader2, Upload, Bookmark, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -13,8 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+import { ai } from '../lib/gemini';
 
 type Syllabus = 'Core' | 'M1' | 'M2';
 
@@ -89,29 +87,16 @@ export default function Solver() {
          - $a=20, b=37$. [1A]
 
       2. Statistics & 3D Geometry:
-         - Quartile range: $42-25=17$. [1M] Upper quartile decreased by 5 kg. [1M, 1A]
          - Cosine formula: $QS^2=12^2+10^2-2(12)(10)\cos 82^\circ$. [1M]
          - Shortest distance from $R$ to plane $PQS$: $h = (13\sin\angle RQS)\sin 80^\circ$. [1M]
 
       3. Polynomials:
          - $F(-1)=-12$ and $F(2)=0$. [1M+1M]
          - Solve $q-r=-2$ and $2q+r=5$ to get $q=1, r=3$. [1A]
-         - Irrational roots: $x = \frac{-1 \pm \sqrt{97}}{12}$. [1M, 1A]
-
-      4. M1 (Probability & Calculus):
-         - Expected value $E(\bar{X}) = \sum x P(X=x) = 99/37$. [1M, 1A]
-         - Trapezoidal rule (4 sub-intervals): $\approx \frac{1}{2} \cdot \frac{6-2}{4} \cdot [f(2)+f(6)+2(f(3)+f(4)+f(5))]$. [1M]
-         - Population change $\int_2^6 P'(t) dt \approx 1.7044$ million. [1M, 1A]
-         - $f''(t) > 0$, so estimate is over-estimate. [1A]
-
-      5. M2 (Integration & Vectors):
-         - Volume of revolution: $\int_0^h \pi x^2 dy = \pi \int_0^h (2ry-y^2) dy = \frac{\pi}{3} h^2(3r-h)$. [1M, 1]
-         - Rate of change: $\frac{dh}{dt} = \frac{1}{\pi[(h-10)^2+21]}$. Greatest value at $h=10$ is $\frac{1}{21\pi}$. [1M, 1A]
-         - Vector Cross Product for normal to plane: $\vec{OP} \times \vec{OQ} = -\vec{i}+2\vec{k}$. [1M, 1A]
-         - Collinearity: $\vec{OB} = 4\vec{OG}$, thus $O, B, G$ are collinear. [1A]`;
+         - Irrational roots: $x = \frac{-1 \pm \sqrt{97}}{12}$. [1M, 1A]`;
 
       const isEN = language === 'EN';
-      const prompt = isEN 
+      const promptText = isEN 
         ? `${systemPrompt} 
            Solve the student's question in clear step-by-step working using HKEAA marking style. Use concise English.
 
@@ -133,35 +118,6 @@ export default function Solver() {
         : `${systemPrompt}
            你是一位 DSE 數學專家。你必須嚴格按照 HKEAA 評分準則格式回答。每一步都必須顯示 M 分（過程分）、A 分（答案分）和 R 分（解釋分）。切勿跳過步驟。務必清晰顯示解題過程。
            
-           以下是真實 DSE 評分標準示例供參考：
-           1. 坐標幾何（圓與切線）：
-              - 若點在 $C$ 上，則 $163-10a+b=0$。 [1M]
-              - 將直線代入圓方程得 $25x^2+(9a+640)x+(90a+4924)=0$。 [1M]
-              - 使用等根條件：$\Delta = 0$。 [1M]
-              - $a=20, b=37$。 [1A]
-
-           2. 統計與立體幾何：
-              - 分位數間距：$42-25=17$。 [1M]
-              - 餘弦公式：$QS^2=12^2+10^2-2(12)(10)\cos 82^\circ$。 [1M]
-              - $R$ 到平面 $PQS$ 的最短距離：$h = (13\sin\angle RQS)\sin 80^\circ$。 [1M]
-
-           3. 多項式：
-              - $F(-1)=-12$ 且 $F(2)=0$。 [1M+1M]
-              - 解方程得 $q=1, r=3$。 [1A]
-              - 無理根：$x = \frac{-1 \pm \sqrt{97}}{12}$。 [1M, 1A]
-
-           4. M1（概率與微積分）：
-              - 期望值 $E(\bar{X}) = 99/37$。 [1M, 1A]
-              - 梯形法則（4 個子區間）：$\int_2^6 f(t) dt \approx 25.7805$。 [1M]
-              - 人口變化 $\approx 1.7044$。 [1M, 1A]
-              - $f''(t) > 0$，因此 (a) 的估計是過高估計。 [1A]
-
-           5. M2（積分與向量）：
-              - 旋轉體體積：$\int_0^h \pi x^2 dy = \frac{\pi}{3} h^2(3r-h)$。 [1M, 1]
-              - 變率：$\frac{dh}{dt} = \frac{1}{\pi[(h-10)^2+21]}$。最大值為 $\frac{1}{21\pi}$。 [1M, 1A]
-              - 向量積（法向量）：$\vec{OP} \times \vec{OQ} = -\vec{i}+2\vec{k}$。 [1M, 1A]
-              - 共線：$\vec{OB} = 4\vec{OG}$，因此 $O, B, G$ 共線。 [1A]
-
            嚴格輸出格式：
            步驟 1：[M1] [步驟說明]
            [數學運算過程]
@@ -179,8 +135,8 @@ export default function Solver() {
            - 如果輸入無效，請回覆「請輸入或上傳有效的數學題目。」`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: { parts: [...parts, { text: prompt }] },
+        model: "gemini-3.1-pro-preview",
+        contents: { parts: [...parts, { text: promptText }] },
       });
 
       const text = response.text;
@@ -193,8 +149,8 @@ export default function Solver() {
         
         // Split by the start of each step to handle multi-line content within steps
         const formattedSteps = text.split(/\n(?=Step \d+:|步驟 \d+：|Final Answer:|最終答案：)/i)
-          .filter(line => line.trim().length > 0)
-          .map(line => line.trim());
+          .filter((line: string) => line.trim().length > 0)
+          .map((line: string) => line.trim());
         
         setSolverResult(formattedSteps);
         setIsRealAI(true);

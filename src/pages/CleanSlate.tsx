@@ -2,12 +2,10 @@ import { motion } from 'motion/react';
 import { Upload, Loader2, Eraser, Download, RefreshCw, ChevronLeft } from 'lucide-react';
 import { useState, useRef, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+import { ai } from '../lib/gemini';
 
 export default function CleanSlate() {
   const { t } = useLanguage();
@@ -35,71 +33,137 @@ export default function CleanSlate() {
     }
   };
 
+  const applyCleaningFilter = (imageSrc: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(imageSrc);
+          return;
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // 1. Detect Yellow/Highlighter specifically
+          const isYellow = r > 150 && g > 140 && b < 160 && r > b + 40 && g > b + 30;
+          
+          if (isYellow) {
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            if (luminance > 130) {
+              data[i] = 255;
+              data[i+1] = 255;
+              data[i+2] = 255;
+              continue;
+            }
+          }
+
+          // 2. High-Performance Document Cleaning (Level Adjustment)
+          const brightness = (r + g + b) / 3;
+          
+          if (brightness > 170) {
+            // Aggressively whiten the paper background and remove noise/grain
+            data[i] = 255;
+            data[i+1] = 255;
+            data[i+2] = 255;
+          } else if (brightness < 120) {
+            // Text Sharpening: Boost contrast and darken the ink
+            const contrast = 1.3;
+            const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+            
+            data[i] = Math.max(0, Math.min(255, factor * (r - 128) + 110));
+            data[i+1] = Math.max(0, Math.min(255, factor * (g - 128) + 110));
+            data[i+2] = Math.max(0, Math.min(255, factor * (b - 128) + 110));
+            
+            // Final darken pass for very dark areas to make them solid black
+            if (brightness < 80) {
+              data[i] = Math.max(0, data[i] - 50);
+              data[i+1] = Math.max(0, data[i+1] - 50);
+              data[i+2] = Math.max(0, data[i+2] - 50);
+            }
+          } else {
+            // Mid-tones: subtle brightening to push them towards the white point
+            data[i] = Math.min(255, r + 30);
+            data[i+1] = Math.min(255, g + 30);
+            data[i+2] = Math.min(255, b + 30);
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(imageSrc);
+      img.src = imageSrc;
+    });
+  };
+
   const processImage = async () => {
     if (!selectedFile || !selectedImage) return;
     
     setIsProcessing(true);
 
     try {
-      // 1. Prepare the image for Gemini
+      // Direct frontend call to Gemini as per Skill requirements for best platform compatibility
       const base64Data = selectedImage.split(',')[1];
       const mimeType = selectedFile.type;
 
-      // 2. Call Gemini Vision API
-      // We use gemini-2.5-flash-image which is optimized for image editing and cleanup.
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+      const prompt = 'Remove handwritten pen marks and annotations. Enhance the image to look like a professionally scanned document: pure white background, clear high-contrast black printed text. Remove all grain, noise, and yellow highlights. If text is under a highlight, keep the text but make the background pure white. Output ONLY the processed image file.';
+
+      const result = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
         contents: {
           parts: [
             {
               inlineData: {
                 data: base64Data,
-                mimeType: mimeType,
-              },
+                mimeType: mimeType
+              }
             },
-            {
-              text: 'Remove only handwritten pen marks, scribbles and ink annotations from this image. Keep all printed text completely intact. If text is highlighted in yellow or any colour, keep the text but you may remove the highlight colour. Never remove any words from the page. Return ONLY the cleaned version of the image.',
-            },
-          ],
-        },
+            { text: prompt }
+          ]
+        }
       });
 
-      // 3. Extract the image from the response
-      let foundImage = false;
-      if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
+      const candidates = result.candidates;
+      if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
+        for (const part of candidates[0].content.parts) {
           if (part.inlineData) {
             const base64Response = part.inlineData.data;
             const responseMimeType = part.inlineData.mimeType || 'image/png';
             setProcessedImage(`data:${responseMimeType};base64,${base64Response}`);
             setIsProcessed(true);
             setIsDemoResult(false);
-            foundImage = true;
-            break;
+            return;
           }
         }
       }
-
-      if (!foundImage) {
-        // If no image was returned, we fallback to a sophisticated simulation 
-        // to fulfill the user's visual request, while acknowledging it's a demo.
-        console.log("Gemini did not return an image part. Using high-fidelity simulation.");
-        
-        // We'll simulate a "cleaned" look by using the original image but applying a CSS filter 
-        // that looks like a high-contrast photocopy (which removes most faint handwriting).
-        setProcessedImage(selectedImage);
-        setIsProcessed(true);
-        setIsDemoResult(true);
+      
+      // If we got text but no image, log it for debugging
+      if (result.text) {
+        console.warn('Gemini returned text instead of image:', result.text);
       }
+      
+      throw new Error('Processed image not returned by AI');
 
     } catch (err) {
-      console.error('Gemini processing error:', err);
-      // Seamless fallback for demo or if API key is missing
-      setTimeout(() => {
-        setProcessedImage(selectedImage);
-        setIsProcessed(true);
-        setIsDemoResult(true);
-      }, 1500);
+      console.error('CleanSlate processing error:', err);
+      // Seamless fallback to local processing
+      const cleaned = await applyCleaningFilter(selectedImage);
+      setProcessedImage(cleaned);
+      setIsProcessed(true);
+      setIsDemoResult(true);
     } finally {
       setIsProcessing(false);
     }
@@ -116,39 +180,14 @@ export default function CleanSlate() {
   };
 
   const handleDownload = () => {
-    if (!processedImage || !selectedImage) return;
+    if (!processedImage) return;
     
-    const downloadImage = (uri: string) => {
-      const link = document.createElement('a');
-      link.href = uri;
-      link.download = `cleanslate-cleaned-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
-
-    if (isDemoResult) {
-      // For demo mode, we need to bake the CSS filters into the image using a canvas
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        // No filters applied for demo mode
-        ctx.drawImage(img, 0, 0);
-
-        downloadImage(canvas.toDataURL('image/png'));
-      };
-      img.src = selectedImage;
-    } else {
-      // For real API results, just download the data URI
-      downloadImage(processedImage);
-    }
+    const link = document.createElement('a');
+    link.href = processedImage;
+    link.download = `cleanslate-cleaned-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
