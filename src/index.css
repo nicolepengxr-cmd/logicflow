@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", serif;
+  --color-accent: #6C63FF;
+  --color-accent-light: #9FA8FF;
+  --color-paper-dark: #0B0F1A;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply bg-white text-paper-dark/80 antialiased overflow-x-hidden leading-relaxed;
+    position: relative;
+  }
+
+  /* Paper Grain Texture */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: url("https://www.transparenttextures.com/patterns/p6.png");
+    opacity: 0.05;
+    z-index: -1;
+  }
+
+  /* Noise Overlay */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+    opacity: 0.03;
+    z-index: -1;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-white text-paper-dark font-display font-bold uppercase tracking-widest px-8 py-4 transition-all hover:bg-accent hover:text-white active:scale-95;
+  }
+}

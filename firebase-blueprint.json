@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Mistake": {
+      "title": "Mistake Entry",
+      "description": "A saved mistake entry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "question": { "type": "string" },
+        "notes": { "type": "string" },
+        "image": { "type": "string", "description": "Base64 encoded image or URL" },
+        "selected": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "question", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/mistakes/{mistakeId}": {
+      "schema": "Mistake",
+      "description": "Individual mistake cards"
+    }
+  }
+}

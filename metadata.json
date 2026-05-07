@@ -1,0 +1,6 @@
+{
+  "name": "LogicFlow",
+  "description": "AI-powered study tool for HK DSE Math students. Clean textbook pages, solve questions in HKEAA-style steps, and turn mistakes into printable sets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
