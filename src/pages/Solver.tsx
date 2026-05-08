@@ -14,7 +14,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
 
-const GEMINI_API_KEY = "AIzaSyAhH48br_lzxSY0xXxJLvLuMCamJnUhChA";
+const GEMINI_API_KEY = "AIzaSyApSv3sTs_yf-KrzQu_69s5PlU3gur4v8Q";
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 type Syllabus = 'Core' | 'M1' | 'M2';
